@@ -12,6 +12,7 @@
     "build:prod": "node build production"
   },
   "devDependencies": {
+    "elm-format": "0.8.0-alpha-elm019rc1-rc2",
     "light-server": "^2.5.1",
     "uglify-js": "^3.4.7"
   }
