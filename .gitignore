@@ -4,3 +4,4 @@ yarn-error.log
 frontend/bin
 frontend/build/
 frontend/elm-stuff
+elm-package.json
