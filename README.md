@@ -1,1 +1,3 @@
-# yas-306-remote
+# Opinionated MusicCast Remote
+
+Tested on a Yamaha YAS-306
