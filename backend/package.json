@@ -1,0 +1,19 @@
+{
+  "name": "yas-306-remote-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "axelo",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "micro-dev",
+    "start": "micro"
+  },
+  "devDependencies": {
+    "micro-dev": "^3.0.0"
+  },
+  "dependencies": {
+    "micro": "^9.3.3",
+    "microrouter": "^3.1.3"
+  }
+}
