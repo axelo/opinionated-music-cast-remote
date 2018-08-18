@@ -1,0 +1,9 @@
+{
+  "serve": "build",
+  "port": 3000,
+  "noReload": false,
+  "watchexps": ["src/*.* # yarn build"],
+  "proxy": "http://localhost:4000",
+  "proxypaths": ["/api"],
+  "historyindex": "/index.html"
+}

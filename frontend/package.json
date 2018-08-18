@@ -1,0 +1,18 @@
+{
+  "name": "opinionated-music-cast-remote-frontend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/axelo/opinionated-music-cast-remote",
+  "author": "axelo",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "npm run build; light-server -c light-server.json",
+    "build": "node build",
+    "build:prod": "node build production"
+  },
+  "devDependencies": {
+    "light-server": "^2.5.1",
+    "uglify-js": "^3.4.7"
+  }
+}
