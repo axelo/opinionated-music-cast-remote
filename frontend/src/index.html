@@ -7,10 +7,33 @@
         content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="apple-mobile-web-app-capable"
         content="yes">
+
+    <script>
+        function parseMessageData(data) {
+            try {
+                return JSON.parse(data);
+            } catch (err) {
+                return { tag: 'invalidEvent', data: data };
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function (event) {
+            var app = Elm.Main.init({ flags: 1 });
+            var receiverEventPort = app.ports.receiverEvent;
+
+            if (!receiverEventPort) {
+                throw new Error('Missing port "receiverEvent"');
+            }
+
+            var eventSource = new EventSource('api/events');
+
+            eventSource.onmessage = function (e) {
+                receiverEventPort.send(parseMessageData(e.data));
+            }
+        });
+    </script>
 </head>
 
-<body>
-    <script>Elm.Main.init({ flags: 1 });</script>
-</body>
+<body></body>
 
 </html>
