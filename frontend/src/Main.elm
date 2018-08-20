@@ -90,6 +90,7 @@ update msg model =
             ( { model | error = Just error }, Cmd.none )
 
 
+subscriptions : Model -> Sub Msg
 subscriptions _ =
     receiverEvent
         (\outside ->
@@ -120,6 +121,7 @@ setStatus status setter =
 -- DECODERS
 
 
+receiverEventDecoder : D.Decoder ReceiverEvent
 receiverEventDecoder =
     D.field "tag" D.string
         |> D.andThen
