@@ -21,34 +21,14 @@ type alias Model =
 
 
 type Msg
-    = LinkClicked Browser.UrlRequest
-    | UrlChanged Url
-    | Connected
-    | GotStatus ReceiverStatus
-    | GotVolume Int
-    | GotMute Bool
-    | GotInputTv Bool
-    | GotUnknownEvent String
-    | ReceiverEventError String
+    = ReceiverEventError String
+    | GotReceiverEvent ReceiverEvent
 
 
 type Status
     = WaitingForConnection
     | WaitingForStatus
     | Status ReceiverStatus
-
-
-type alias ReceiverStatus =
-    { isPowerOn : Bool
-    , isInputTv : Bool
-    , isMuted : Bool
-    , volume : Int
-    }
-
-
-type alias StatusVolume =
-    { volume : Int
-    }
 
 
 type ReceiverEvent
@@ -58,6 +38,14 @@ type ReceiverEvent
     | EventMute Bool
     | EventInputTv Bool
     | EventUnkown String
+
+
+type alias ReceiverStatus =
+    { isPowerOn : Bool
+    , isInputTv : Bool
+    , isMuted : Bool
+    , volume : Int
+    }
 
 
 
@@ -77,62 +65,41 @@ init flags =
 -- UPDATE
 
 
+setStatus : Status -> (ReceiverStatus -> ReceiverStatus) -> Status
+setStatus status setter =
+    case status of
+        Status receiverStatus ->
+            Status (setter receiverStatus)
+
+        _ ->
+            status
+
+
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     case msg of
-        Connected ->
-            ( { model | status = WaitingForStatus }, Cmd.none )
+        GotReceiverEvent event ->
+            case event of
+                EventConneted ->
+                    ( { model | status = WaitingForStatus }, Cmd.none )
 
-        GotStatus receiverStatus ->
-            ( { model | status = Status receiverStatus }, Cmd.none )
+                EventStatus status ->
+                    ( { model | status = Status status }, Cmd.none )
 
-        GotVolume volume ->
-            let
-                nextStatus =
-                    case model.status of
-                        Status receiverStatus ->
-                            Status (setStatusVolume volume receiverStatus)
+                EventVolume volume ->
+                    ( { model | status = setStatus model.status (\rs -> { rs | volume = volume }) }, Cmd.none )
 
-                        _ ->
-                            model.status
-            in
-            ( { model | status = nextStatus }, Cmd.none )
+                EventMute isMuted ->
+                    ( { model | status = setStatus model.status (\rs -> { rs | isMuted = isMuted }) }, Cmd.none )
 
-        GotMute mute ->
-            let
-                nextStatus =
-                    case model.status of
-                        Status receiverStatus ->
-                            Status (setMute mute receiverStatus)
+                EventInputTv isInputTv ->
+                    ( { model | status = setStatus model.status (\rs -> { rs | isInputTv = isInputTv }) }, Cmd.none )
 
-                        _ ->
-                            model.status
-            in
-            ( { model | status = nextStatus }, Cmd.none )
-
-        GotInputTv tv ->
-            let
-                nextStatus =
-                    case model.status of
-                        Status receiverStatus ->
-                            Status (setInputTv tv receiverStatus)
-
-                        _ ->
-                            model.status
-            in
-            ( { model | status = nextStatus }, Cmd.none )
-
-        GotUnknownEvent tag ->
-            ( { model | error = Just ("Unknown receiver event '" ++ tag ++ "'") }, Cmd.none )
+                EventUnkown tag ->
+                    ( { model | error = Just ("Unknown receiver event '" ++ tag ++ "'") }, Cmd.none )
 
         ReceiverEventError error ->
             ( { model | error = Just error }, Cmd.none )
-
-        LinkClicked urlReq ->
-            ( model, Cmd.none )
-
-        UrlChanged url ->
-            ( model, Cmd.none )
 
 
 subscriptions _ =
@@ -140,47 +107,11 @@ subscriptions _ =
         (\outside ->
             case D.decodeValue receiverEventDecoder outside of
                 Ok event ->
-                    case event of
-                        EventConneted ->
-                            Connected
-
-                        EventStatus status ->
-                            GotStatus status
-
-                        EventVolume volume ->
-                            GotVolume volume
-
-                        EventMute mute ->
-                            GotMute mute
-
-                        EventInputTv tv ->
-                            GotInputTv tv
-
-                        EventUnkown tag ->
-                            GotUnknownEvent tag
+                    GotReceiverEvent event
 
                 Err err ->
                     ReceiverEventError (D.errorToString err)
         )
-
-
-
--- HELPERS
-
-
-setStatusVolume : Int -> ReceiverStatus -> ReceiverStatus
-setStatusVolume volume receiverStatus =
-    { receiverStatus | volume = volume }
-
-
-setMute : Bool -> ReceiverStatus -> ReceiverStatus
-setMute mute receiverStatus =
-    { receiverStatus | isMuted = mute }
-
-
-setInputTv : Bool -> ReceiverStatus -> ReceiverStatus
-setInputTv tv receiverStatus =
-    { receiverStatus | isInputTv = tv }
 
 
 
