@@ -15,8 +15,7 @@ import Url exposing (Url)
 
 
 type alias Model =
-    { navKey : Nav.Key
-    , status : Status
+    { status : Status
     , error : Maybe String
     }
 
@@ -26,7 +25,9 @@ type Msg
     | UrlChanged Url
     | Connected
     | GotStatus ReceiverStatus
-    | GotVolume StatusVolume
+    | GotVolume Int
+    | GotMute Bool
+    | GotInputTv Bool
     | GotUnknownEvent String
     | ReceiverEventError String
 
@@ -53,7 +54,9 @@ type alias StatusVolume =
 type ReceiverEvent
     = EventConneted
     | EventStatus ReceiverStatus
-    | EventStatusVolume StatusVolume
+    | EventVolume Int
+    | EventMute Bool
+    | EventInputTv Bool
     | EventUnkown String
 
 
@@ -61,10 +64,9 @@ type ReceiverEvent
 -- INIT
 
 
-init : Int -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init flags url navKey =
-    ( { navKey = navKey
-      , status = WaitingForConnection
+init : Int -> ( Model, Cmd Msg )
+init flags =
+    ( { status = WaitingForConnection
       , error = Nothing
       }
     , Cmd.none
@@ -96,6 +98,30 @@ update msg model =
             in
             ( { model | status = nextStatus }, Cmd.none )
 
+        GotMute mute ->
+            let
+                nextStatus =
+                    case model.status of
+                        Status receiverStatus ->
+                            Status (setMute mute receiverStatus)
+
+                        _ ->
+                            model.status
+            in
+            ( { model | status = nextStatus }, Cmd.none )
+
+        GotInputTv tv ->
+            let
+                nextStatus =
+                    case model.status of
+                        Status receiverStatus ->
+                            Status (setInputTv tv receiverStatus)
+
+                        _ ->
+                            model.status
+            in
+            ( { model | status = nextStatus }, Cmd.none )
+
         GotUnknownEvent tag ->
             ( { model | error = Just ("Unknown receiver event '" ++ tag ++ "'") }, Cmd.none )
 
@@ -121,8 +147,14 @@ subscriptions _ =
                         EventStatus status ->
                             GotStatus status
 
-                        EventStatusVolume volume ->
+                        EventVolume volume ->
                             GotVolume volume
+
+                        EventMute mute ->
+                            GotMute mute
+
+                        EventInputTv tv ->
+                            GotInputTv tv
 
                         EventUnkown tag ->
                             GotUnknownEvent tag
@@ -136,9 +168,23 @@ subscriptions _ =
 -- HELPERS
 
 
-setStatusVolume : StatusVolume -> ReceiverStatus -> ReceiverStatus
-setStatusVolume { volume } receiverStatus =
+setStatusVolume : Int -> ReceiverStatus -> ReceiverStatus
+setStatusVolume volume receiverStatus =
     { receiverStatus | volume = volume }
+
+
+setMute : Bool -> ReceiverStatus -> ReceiverStatus
+setMute mute receiverStatus =
+    { receiverStatus | isMuted = mute }
+
+
+setInputTv : Bool -> ReceiverStatus -> ReceiverStatus
+setInputTv tv receiverStatus =
+    { receiverStatus | isInputTv = tv }
+
+
+
+-- DECODERS
 
 
 receiverEventDecoder =
@@ -152,8 +198,14 @@ receiverEventDecoder =
                     "status" ->
                         D.field "data" receiverStatusDecoder
 
-                    "statusVolume" ->
-                        D.field "data" receiverStatusVolumeDecoder
+                    "tv" ->
+                        D.field "data" receiverInputTvDecoder
+
+                    "volume" ->
+                        D.field "data" receiverVolumeDecoder
+
+                    "mute" ->
+                        D.field "data" receiverMuteDecoder
 
                     _ ->
                         D.succeed (EventUnkown tag)
@@ -170,10 +222,22 @@ receiverStatusDecoder =
         |> D.map EventStatus
 
 
-receiverStatusVolumeDecoder : D.Decoder ReceiverEvent
-receiverStatusVolumeDecoder =
-    D.map StatusVolume (D.field "volume" D.int)
-        |> D.map EventStatusVolume
+receiverVolumeDecoder : D.Decoder ReceiverEvent
+receiverVolumeDecoder =
+    D.int
+        |> D.map EventVolume
+
+
+receiverInputTvDecoder : D.Decoder ReceiverEvent
+receiverInputTvDecoder =
+    D.bool
+        |> D.map EventInputTv
+
+
+receiverMuteDecoder : D.Decoder ReceiverEvent
+receiverMuteDecoder =
+    D.bool
+        |> D.map EventMute
 
 
 
@@ -183,7 +247,7 @@ receiverStatusVolumeDecoder =
 view : Model -> Browser.Document msg
 view model =
     let
-        { power, volume, connectionStatus } =
+        { power, tv, volume, mute, connectionStatus } =
             case model.status of
                 Status receiverStatus ->
                     { power =
@@ -192,13 +256,27 @@ view model =
 
                         else
                             "OFF"
+                    , tv =
+                        if receiverStatus.isInputTv then
+                            "ON"
+
+                        else
+                            "OFF"
                     , volume = String.fromInt receiverStatus.volume
+                    , mute =
+                        if receiverStatus.isMuted then
+                            "ON"
+
+                        else
+                            "OFF"
                     , connectionStatus = "Let's do this!"
                     }
 
                 _ ->
                     { power = "Unkown"
+                    , tv = "Unknown"
                     , volume = "Unknown"
+                    , mute = "Unknown"
                     , connectionStatus = "Waiting for status"
                     }
     in
@@ -208,6 +286,8 @@ view model =
             [ div [] [ text ("Connection: " ++ connectionStatus) ]
             , div [] [ text ("Error: " ++ Maybe.withDefault "No errors" model.error) ]
             , div [] [ text ("Power status: " ++ power) ]
+            , div [] [ text ("Input TV: " ++ tv) ]
+            , div [] [ text ("Muted: " ++ mute) ]
             , div [] [ text ("Volume: " ++ volume) ]
             ]
         ]
@@ -218,11 +298,9 @@ view model =
 
 
 main =
-    Browser.application
+    Browser.document
         { init = init
         , view = view
         , update = update
         , subscriptions = subscriptions
-        , onUrlRequest = LinkClicked
-        , onUrlChange = UrlChanged
         }

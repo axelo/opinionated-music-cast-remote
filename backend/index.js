@@ -66,6 +66,43 @@ const musicCastStatusToStatus = musicCastStatus => ({
   volume: musicCastStatus.volume || 0
 });
 
+const convertToEventData = body => {
+  if (body && body.main && body.main.hasOwnProperty('volume')) {
+    return {
+      success: true,
+      data: {
+        tag: 'volume',
+        data: body.main.volume
+      }
+    };
+  }
+
+  if (body && body.main && body.main.hasOwnProperty('mute')) {
+    return {
+      success: true,
+      data: {
+        tag: 'mute',
+        data: body.main.mute
+      }
+    };
+  }
+
+  if (body && body.main && body.main.hasOwnProperty('input')) {
+    return {
+      success: true,
+      data: {
+        tag: 'tv',
+        data: body.main.input === 'bd_dvd'
+      }
+    };
+  }
+
+  return {
+    eventData: false,
+    data: body
+  };
+};
+
 const getStatus = async (req, res) => {
   const body = await request('/YamahaExtendedControl/v1/main/getStatus');
   const transformed = musicCastStatusToStatus(body);
@@ -106,43 +143,41 @@ const events = (req, res) => {
 const notFound = (req, res) => send(res, 404, { message: 'Route not found' });
 
 eventServer.on('close', () => {
-  console.log('ON CLOSING eventServer');
+  console.log('Closing event server');
   eventClients.forEach(res => res.emit('close'));
 });
 
 eventServer.on('error', err => {
-  console.log('Event server error', err);
+  if (err && err.code === 'EADDRINUSE') {
+    throw new Error(
+      'Event server port ' + INCOMING_EVENT_SERVER_PORT + ' not available'
+    );
+  }
 });
 
 eventServer.on('message', msg => {
+  const msgText = msg.toString('utf8');
   let body = '';
 
   try {
-    body = JSON.parse(msg.toString('utf8'));
-
-    if (body.main && body.main.volume) {
-      const outMessage =
-        'data: ' +
-        JSON.stringify({
-          tag: 'statusVolume',
-          data: {
-            volume: body.main.volume
-          }
-        }) +
-        '\n\n';
-
-      console.log('Sending event', outMessage);
-
-      eventClients.forEach(res => {
-        res.write(outMessage);
-      });
-    }
+    body = JSON.parse(msgText);
   } catch (err) {
-    console.warn('Could not parse event', msg.toString());
+    console.warn('Could not parse event', msgText);
     return;
   }
 
-  console.log(body);
+  const eventData = convertToEventData(body);
+
+  if (!eventData.success) {
+    console.debug('Unhandled event', eventData.data);
+    return;
+  }
+
+  const eventMessage = 'data: ' + JSON.stringify(eventData.data) + '\n\n';
+
+  console.log('Sending event', eventData.data);
+
+  eventClients.forEach(res => res.write(eventMessage));
 });
 
 eventServer.on('listening', () => {
@@ -177,13 +212,8 @@ eventServer.on('listening', () => {
 eventServer.bind(INCOMING_EVENT_SERVER_PORT, LOCAL_IP);
 
 process.once('SIGUSR2', () => {
-  console.log('GOT SIGUSR2');
-
   try {
-    eventServer.close(() => {
-      console.log('eventServer closed');
-    });
-    eventClients.forEach(res => res.emit('close'));
+    eventServer.close();
   } catch (err) {
     console.error('SIGUSR2', err);
   }
