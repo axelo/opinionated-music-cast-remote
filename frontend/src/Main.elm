@@ -1,13 +1,11 @@
 module Main exposing (main)
 
 import Browser
-import Browser.Navigation as Nav
-import Html exposing (Html, a, div, footer, header, main_, nav, text)
+import Html exposing (Html, div, main_, text)
 import Html.Attributes as Attrib
 import Http
 import Json.Decode as D
 import Ports exposing (receiverEvent)
-import Url exposing (Url)
 
 
 
@@ -65,16 +63,6 @@ init flags =
 -- UPDATE
 
 
-setStatus : Status -> (ReceiverStatus -> ReceiverStatus) -> Status
-setStatus status setter =
-    case status of
-        Status receiverStatus ->
-            Status (setter receiverStatus)
-
-        _ ->
-            status
-
-
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     case msg of
@@ -112,6 +100,20 @@ subscriptions _ =
                 Err err ->
                     ReceiverEventError (D.errorToString err)
         )
+
+
+
+-- HELPERS
+
+
+setStatus : Status -> (ReceiverStatus -> ReceiverStatus) -> Status
+setStatus status setter =
+    case status of
+        Status receiverStatus ->
+            Status (setter receiverStatus)
+
+        _ ->
+            status
 
 
 
