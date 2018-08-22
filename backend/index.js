@@ -9,6 +9,15 @@ const INCOMING_EVENT_SERVER_PORT = parseInt(process.env.PORT) || 41100;
 
 let eventClients = [];
 
+const sendEventToClients = data => {
+  const eventMessage = 'data: ' + JSON.stringify(data) + '\n\n';
+
+  console.log('Sending event', data);
+  console.log('Nb of eventClients', eventClients.length);
+
+  eventClients.forEach(res => res.write(eventMessage));
+};
+
 const request = (path, headers, ignoreResponseCode) =>
   new Promise((resolve, reject) => {
     const req = http.get({
@@ -145,6 +154,7 @@ const notFound = (req, res) => send(res, 404, { message: 'Route not found' });
 eventServer.on('close', () => {
   console.log('Closing event server');
   eventClients.forEach(res => res.emit('close'));
+  eventClients = [];
 });
 
 eventServer.on('error', err => {
@@ -173,11 +183,7 @@ eventServer.on('message', msg => {
     return;
   }
 
-  const eventMessage = 'data: ' + JSON.stringify(eventData.data) + '\n\n';
-
-  console.log('Sending event', eventData.data);
-
-  eventClients.forEach(res => res.write(eventMessage));
+  sendEventToClients(event.data);
 });
 
 eventServer.on('listening', () => {
@@ -212,12 +218,52 @@ eventServer.on('listening', () => {
 eventServer.bind(INCOMING_EVENT_SERVER_PORT, LOCAL_IP);
 
 process.once('SIGUSR2', () => {
+  process.stdin.removeAllListeners('keypress');
+
   try {
     eventServer.close();
+
+    eventClients = [];
   } catch (err) {
     console.error('SIGUSR2', err);
   }
 });
+
+const readline = require('readline');
+
+readline.emitKeypressEvents(process.stdin);
+process.stdin.setRawMode(true);
+
+const debugStatus = {
+  isPowerOn: false,
+  isInputTv: false,
+  isMuted: false,
+  volume: 0
+};
+
+const handleKeypress = (str, key) => {
+  if (key.ctrl && key.name === 'c') return process.exit();
+
+  switch (str) {
+    case 's':
+      return sendEventToClients({ tag: 'status', data: debugStatus });
+    case '+':
+      return sendEventToClients({ tag: 'volume', data: ++debugStatus.volume });
+    case '-':
+      return sendEventToClients({ tag: 'volume', data: --debugStatus.volume });
+    case 'm':
+      return sendEventToClients({ tag: 'mute', data: !debugStatus.isMuted });
+    case 'p':
+      return sendEventToClients({ tag: 'power', data: !debugStatus.isPowerOn });
+    case 't':
+      return sendEventToClients({ tag: 'tv', data: !debugStatus.isPowerOn });
+
+    default:
+      process.stdout.write(key.sequence);
+  }
+};
+
+process.stdin.on('keypress', handleKeypress);
 
 module.exports = router(
   get('/api/status', getStatus),
