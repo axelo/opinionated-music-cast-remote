@@ -1,0 +1,205 @@
+@import url('https://fonts.googleapis.com/css?family=Cousine');
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background-color: rgb(10, 10, 10);
+  color: rgb(186, 181, 171);
+  font-family: 'Cousine', monospace;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.main {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background-color: rgb(100, 90, 90);
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  padding-right: 1rem;
+  padding-left: 1rem;
+  display: flex;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.section {
+  height: 100%;
+}
+
+.section-source {
+  padding: 3rem 1rem 1rem 1rem;
+}
+
+.section-volume {
+  padding: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+.footer {
+  font-size: 0.8rem;
+  text-align: center;
+  text-transform: uppercase;
+  padding-top: 1rem;
+  flex-shrink: 0;
+}
+
+.header-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.small-square {
+  width: 0.6rem;
+  height: 0.6rem;
+  background-color: rgb(10, 10, 10);
+  margin-bottom: 0.5rem;
+  margin-left: 2px;
+}
+
+.button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.power-button {
+  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  overflow: hidden;
+  background-color: rgb(209, 90, 55);
+}
+
+.power-button:active {
+  background-color: rgba(209, 90, 55, 0.5);
+}
+
+.source-button-container {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  text-transform: uppercase;
+}
+
+.source-button {
+  width: 3rem;
+  height: 1.5rem;
+  border-radius: 1rem;
+  margin-bottom: 0.25rem;
+  background-color: rgb(214, 214, 214);
+}
+
+.source-button:active {
+  background-color: rgba(214, 214, 214, 0.5);
+}
+
+.volume-container {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.volume-button-container {
+  z-index: 1;
+  display: inline-flex;
+}
+
+.volume-section-fake-mute-height {
+  height: 1.375rem;
+}
+
+.volume-button-inner-container {
+  display: inline-flex;
+  background-color: rgb(10, 10, 10);
+  padding-right: 0.125rem;
+}
+
+.volume-button {
+  width: 3rem;
+  height: 1.5rem;
+  border-radius: 1rem;
+  color: rgb(240, 240, 240);
+  background-color: rgb(88, 88, 88);
+}
+
+.volume-button:active {
+  background-color: rgba(88, 88, 88, 0.5);
+}
+
+.volume-value {
+  position: relative;
+  left: 2rem;
+  z-index: 1;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  background-color: rgb(10, 10, 10);
+  line-height: 1;
+  padding-top: 0.2rem;
+  padding-bottom: 0.1rem;
+  width: 5.75rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.volume-lines {
+  position: absolute;
+  left: 0;
+  top: 0.625rem;
+  right: 1.75rem;
+  bottom: 2rem;
+  border: 2px solid white;
+  border-left-color: transparent;
+  border-radius: 0.5rem;
+}
+
+.mute-button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  margin-right: 0.5rem;
+  text-transform: uppercase;
+}
+
+.mute-button {
+  border-radius: 50%;
+  width: 1.5rem;
+  height: 1.5rem;
+  overflow: hidden;
+  background-color: rgb(88, 88, 88);
+  margin-bottom: 0.25rem;
+}
+
+.mute-button:active {
+  background-color: rgba(88, 88, 88, 0.5);
+}
+
+.bg-red {
+  background-color: rgb(255, 0, 0);
+}
+
+.bg-green {
+  background-color: rgb(0, 255, 0);
+}

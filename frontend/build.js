@@ -103,6 +103,12 @@ elmMake(
 
     createIndexHtml(pathToBundle, 'src/index.html', OUTPUT_DIR + '/index.html');
 
+    fs.copyFileSync('src/index.js', OUTPUT_DIR + '/index.js');
+    fs.copyFileSync('src/index.css', OUTPUT_DIR + '/index.css');
+    fs.copyFileSync('src/iconPower.svg', OUTPUT_DIR + '/iconPower.svg');
+    fs.copyFileSync('src/iconPlus.svg', OUTPUT_DIR + '/iconPlus.svg');
+    fs.copyFileSync('src/iconMinus.svg', OUTPUT_DIR + '/iconMinus.svg');
+
     removeOldBundleFiles(pathToBundle);
   })
   .catch(err => {

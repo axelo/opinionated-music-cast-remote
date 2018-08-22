@@ -1,8 +1,8 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, div, main_, text)
-import Html.Attributes as Attrib
+import Html exposing (Html, button, div, footer, header, img, main_, section, span, text)
+import Html.Attributes exposing (alt, class, src, type_)
 import Http
 import Json.Decode as D
 import Ports exposing (receiverEvent)
@@ -126,6 +126,24 @@ setStatus status setter =
             status
 
 
+asHeaderIndicators status =
+    case status of
+        Status { isPowerOn, isMuted, isInputTv } ->
+            { isPowerOn = isPowerOn, isMuted = isMuted, isInputTv = isInputTv }
+
+        _ ->
+            { isPowerOn = False, isMuted = False, isInputTv = False }
+
+
+getVolume status =
+    case status of
+        Status { volume } ->
+            Just volume
+
+        _ ->
+            Nothing
+
+
 
 -- DECODERS
 
@@ -178,56 +196,91 @@ receiverStatusDecoder =
 
 view : Model -> Browser.Document msg
 view model =
-    let
-        { power, tv, volume, mute, connectionStatus } =
-            case model.status of
-                Status receiverStatus ->
-                    { power =
-                        if receiverStatus.isPowerOn then
-                            "ON"
-
-                        else
-                            "OFF"
-                    , tv =
-                        if receiverStatus.isInputTv then
-                            "ON"
-
-                        else
-                            "OFF"
-                    , volume = String.fromInt receiverStatus.volume
-                    , mute =
-                        if receiverStatus.isMuted then
-                            "ON"
-
-                        else
-                            "OFF"
-                    , connectionStatus = "Let's do this!"
-                    }
-
-                _ ->
-                    { power = "Unkown"
-                    , tv = "Unknown"
-                    , volume = "Unknown"
-                    , mute = "Unknown"
-                    , connectionStatus =
-                        case model.status of
-                            Disconnected ->
-                                "Disconnected :/"
-
-                            _ ->
-                                "Waiting for status"
-                    }
-    in
     Browser.Document "MusicCast Remote"
-        [ main_
-            [ Attrib.class "" ]
-            [ div [] [ text ("Connection: " ++ connectionStatus) ]
-            , div [] [ text ("Error: " ++ Maybe.withDefault "No errors" model.error) ]
-            , div [] [ text ("Power status: " ++ power) ]
-            , div [] [ text ("Input TV: " ++ tv) ]
-            , div [] [ text ("Muted: " ++ mute) ]
-            , div [] [ text ("Volume: " ++ volume) ]
+        [ main_ [ class "main" ]
+            [ viewHeader (asHeaderIndicators model.status)
+            , section [ class "section section-source" ] [ viewSourceButton ]
+            , viewVolumeSection (getVolume model.status)
+            , footer [ class "footer" ] [ text "yamaha" ]
             ]
+        ]
+
+
+viewHeader { isPowerOn, isMuted, isInputTv } =
+    header [ class "header" ]
+        [ viewHeaderIndicator "power" "bg-red" "bg-green" isPowerOn
+        , viewHeaderIndicator "tv" "" "bg-green" isInputTv
+        , viewHeaderIndicator "mute" "" "bg-green" isMuted
+        , viewPowerButton
+        ]
+
+
+viewHeaderIndicator caption inactiveClass activeClass isActive =
+    div [ class "header-indicator" ]
+        [ div
+            [ class
+                ("small-square "
+                    ++ (if isActive then
+                            activeClass
+
+                        else
+                            inactiveClass
+                       )
+                )
+            ]
+            []
+        , text caption
+        ]
+
+
+viewPowerButton =
+    button [ type_ "button", class "button power-button" ]
+        [ img [ src "iconPower.svg" ] [] ]
+
+
+viewSourceButton =
+    div [ class "source-button-container" ]
+        [ button [ type_ "button", class "button source-button" ] []
+        , span [] [ text "tv" ]
+        ]
+
+
+viewVolumeSection volume =
+    section [ class "section section-volume" ]
+        [ div [ class "volume-container" ]
+            [ viewVolumeButton "iconPlus.svg" "Volume up"
+            , viewVolumeValue volume
+            , viewVolumeButton "iconMinus.svg" "Volume down"
+            , viewVolumeLines
+            , div [ class "volume-section-fake-mute-height" ] []
+            ]
+        , viewMuteButton
+        ]
+
+
+viewVolumeButton srcUrl altText =
+    div [ class "volume-button-container" ]
+        [ div [ class "volume-button-inner-container" ]
+            [ button [ type_ "button", class "button volume-button" ]
+                [ img [ src srcUrl, alt altText ] [] ]
+            ]
+        ]
+
+
+viewVolumeValue : Maybe Int -> Html msg
+viewVolumeValue volume =
+    div [ class "volume-value" ]
+        [ text ("volume " ++ Maybe.withDefault "" (Maybe.map String.fromInt volume) ++ "%") ]
+
+
+viewVolumeLines =
+    div [ class "volume-lines" ] []
+
+
+viewMuteButton =
+    div [ class "mute-button-container" ]
+        [ button [ type_ "button", class "button mute-button" ] []
+        , text "mute"
         ]
 
 
