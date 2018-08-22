@@ -264,7 +264,7 @@ const handleKeypress = (str, key) => {
     case 't':
       return sendEventToClients({
         tag: 'tv',
-        data: (debugStatus.isPowerOn = !debugStatus.isPowerOn)
+        data: (debugStatus.isInputTv = !debugStatus.isInputTv)
       });
 
     default:
