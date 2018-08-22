@@ -106,6 +106,16 @@ const convertToEventData = body => {
     };
   }
 
+  if (body && body.main && body.main.hasOwnProperty('power')) {
+    return {
+      success: true,
+      data: {
+        tag: 'power',
+        data: body.main.power === 'on'
+      }
+    };
+  }
+
   return {
     eventData: false,
     data: body
@@ -183,7 +193,7 @@ eventServer.on('message', msg => {
     return;
   }
 
-  sendEventToClients(event.data);
+  sendEventToClients(eventData.data);
 });
 
 eventServer.on('listening', () => {

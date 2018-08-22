@@ -35,6 +35,7 @@ type ReceiverEvent
     | EventVolume Int
     | EventMute Bool
     | EventInputTv Bool
+    | EventPower Bool
     | EventUnkown String
 
 
@@ -82,6 +83,9 @@ update msg model =
 
                 EventInputTv isInputTv ->
                     ( { model | status = setStatus model.status (\rs -> { rs | isInputTv = isInputTv }) }, Cmd.none )
+
+                EventPower isPowerOn ->
+                    ( { model | status = setStatus model.status (\rs -> { rs | isPowerOn = isPowerOn }) }, Cmd.none )
 
                 EventUnkown tag ->
                     ( { model | error = Just ("Unknown receiver event '" ++ tag ++ "'") }, Cmd.none )
@@ -134,13 +138,16 @@ receiverEventDecoder =
                         D.field "data" receiverStatusDecoder
 
                     "tv" ->
-                        D.field "data" receiverInputTvDecoder
+                        D.field "data" (D.map EventInputTv D.bool)
 
                     "volume" ->
-                        D.field "data" receiverVolumeDecoder
+                        D.field "data" (D.map EventVolume D.int)
 
                     "mute" ->
-                        D.field "data" receiverMuteDecoder
+                        D.field "data" (D.map EventMute D.bool)
+
+                    "power" ->
+                        D.field "data" (D.map EventPower D.bool)
 
                     _ ->
                         D.succeed (EventUnkown tag)
@@ -155,24 +162,6 @@ receiverStatusDecoder =
         (D.field "isMuted" D.bool)
         (D.field "volume" D.int)
         |> D.map EventStatus
-
-
-receiverVolumeDecoder : D.Decoder ReceiverEvent
-receiverVolumeDecoder =
-    D.int
-        |> D.map EventVolume
-
-
-receiverInputTvDecoder : D.Decoder ReceiverEvent
-receiverInputTvDecoder =
-    D.bool
-        |> D.map EventInputTv
-
-
-receiverMuteDecoder : D.Decoder ReceiverEvent
-receiverMuteDecoder =
-    D.bool
-        |> D.map EventMute
 
 
 
