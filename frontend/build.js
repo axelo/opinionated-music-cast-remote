@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
-const ELM_019_BIN = './bin/elm19';
+const ELM_019_BIN = 'elm';
 const OUTPUT_DIR = 'build';
 const BUNDLE_FILENAME = 'bundle';
 const BUNDLE_FILEPATH = OUTPUT_DIR + '/' + BUNDLE_FILENAME + '.js';
