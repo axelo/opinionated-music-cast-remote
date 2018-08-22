@@ -7,7 +7,6 @@ Useful for editor plugins to get some auto complete.
 
  */
 
-const https = require('https');
 const fs = require('fs');
 const elmJson = require('./elm.json');
 
@@ -64,46 +63,31 @@ Object.entries(exactDependencies).forEach(entry => {
     }, 'elm-stuff');
 });
 
-// Download 0.19 docs to elm-stuff/packages
-console.log(
-  'Downloading docs for the following packages:\n',
-  exactDependencies
-);
+// Copy 0.19 docs to elm-stuff/packages
+console.log('Copying docs for the following packages:\n', exactDependencies);
+
+const homedir = require('os').homedir();
 
 Object.entries(exactDependencies).forEach(entry => {
-  https
-    .get(
-      'https://alpha.elm-lang.org/packages/' +
-        entry[0] +
-        '/' +
-        entry[1] +
-        '/docs.json',
-      resp => {
-        let data = '';
+  const src =
+    homedir +
+    '/.elm/0.19.0/package/' +
+    entry[0] +
+    '/' +
+    entry[1] +
+    '/documentation.json';
 
-        resp.on('data', chunk => (data += chunk));
-        resp.on('end', () => {
-          const body = JSON.parse(data);
+  const body = JSON.parse(fs.readFileSync(src, 'utf8').toString());
 
-          // Rename back from 'unions' to 'types'
-          body.forEach(docPart => {
-            docPart.types = docPart.unions;
-            delete docPart.unions;
-          });
+  // Rename back from 'unions' to 'types'
+  body.forEach(docPart => {
+    docPart.types = docPart.unions;
+    delete docPart.unions;
+  });
 
-          fs.writeFileSync(
-            'elm-stuff/packages/' +
-              entry[0] +
-              '/' +
-              entry[1] +
-              '/documentation.json',
-            JSON.stringify(body),
-            'utf8'
-          );
-        });
-      }
-    )
-    .on('error', err => {
-      throw new Error(err);
-    });
+  fs.writeFileSync(
+    'elm-stuff/packages/' + entry[0] + '/' + entry[1] + '/documentation.json',
+    JSON.stringify(body),
+    'utf8'
+  );
 });
