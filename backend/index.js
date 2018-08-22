@@ -252,11 +252,20 @@ const handleKeypress = (str, key) => {
     case '-':
       return sendEventToClients({ tag: 'volume', data: --debugStatus.volume });
     case 'm':
-      return sendEventToClients({ tag: 'mute', data: !debugStatus.isMuted });
+      return sendEventToClients({
+        tag: 'mute',
+        data: (debugStatus.isMuted = !debugStatus.isMuted)
+      });
     case 'p':
-      return sendEventToClients({ tag: 'power', data: !debugStatus.isPowerOn });
+      return sendEventToClients({
+        tag: 'power',
+        data: (debugStatus.isPowerOn = !debugStatus.isPowerOn)
+      });
     case 't':
-      return sendEventToClients({ tag: 'tv', data: !debugStatus.isPowerOn });
+      return sendEventToClients({
+        tag: 'tv',
+        data: (debugStatus.isPowerOn = !debugStatus.isPowerOn)
+      });
 
     default:
       process.stdout.write(key.sequence);
