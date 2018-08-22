@@ -27,6 +27,12 @@
 
             var eventSource = new EventSource('api/events');
 
+            eventSource.onerror = function (err) {
+                if (eventSource.readyState === 2) {
+                    receiverEventPort.send({ tag: 'disconnected' });
+                }
+            }
+
             eventSource.onmessage = function (e) {
                 receiverEventPort.send(parseMessageData(e.data));
             }

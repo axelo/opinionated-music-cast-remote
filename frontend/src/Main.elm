@@ -26,11 +26,13 @@ type Msg
 type Status
     = WaitingForConnection
     | WaitingForStatus
+    | Disconnected
     | Status ReceiverStatus
 
 
 type ReceiverEvent
     = EventConneted
+    | EventDisconnected
     | EventStatus ReceiverStatus
     | EventVolume Int
     | EventMute Bool
@@ -71,6 +73,9 @@ update msg model =
             case event of
                 EventConneted ->
                     ( { model | status = WaitingForStatus }, Cmd.none )
+
+                EventDisconnected ->
+                    ( { model | status = Disconnected }, Cmd.none )
 
                 EventStatus status ->
                     ( { model | status = Status status }, Cmd.none )
@@ -133,6 +138,9 @@ receiverEventDecoder =
                 case tag of
                     "connected" ->
                         D.succeed EventConneted
+
+                    "disconnected" ->
+                        D.succeed EventDisconnected
 
                     "status" ->
                         D.field "data" receiverStatusDecoder
@@ -201,7 +209,13 @@ view model =
                     , tv = "Unknown"
                     , volume = "Unknown"
                     , mute = "Unknown"
-                    , connectionStatus = "Waiting for status"
+                    , connectionStatus =
+                        case model.status of
+                            Disconnected ->
+                                "Disconnected :/"
+
+                            _ ->
+                                "Waiting for status"
                     }
     in
     Browser.Document "MusicCast Remote"

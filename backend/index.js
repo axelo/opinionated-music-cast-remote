@@ -138,6 +138,8 @@ const events = (req, res) => {
   console.log('Client subscribing to receiver events');
   eventClients.push(res);
 
+  res.write('data: { "tag": "connected", "data": null }\n\n');
+
   request('/YamahaExtendedControl/v1/main/getStatus')
     .then(musicCastStatusToStatus)
     .then(status => {
@@ -150,8 +152,6 @@ const events = (req, res) => {
         'data: ' + JSON.stringify({ tag: 'error', data: err.message }) + '\n\n'
       )
     );
-
-  res.write('data: { "tag": "connected", "data": null }\n\n');
 
   res.socket.on('close', () => {
     console.log('Client left');
