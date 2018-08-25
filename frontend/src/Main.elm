@@ -3,7 +3,7 @@ module Main exposing (main)
 import Browser
 import Html exposing (Html, button, div, footer, header, img, main_, section, span, text)
 import Html.Attributes exposing (alt, class, src, type_)
-import Html.Events exposing (onClick)
+import Html.Events exposing (custom)
 import Http
 import Json.Decode as D
 import Ports exposing (receiverEvent)
@@ -226,6 +226,15 @@ getVolume status =
             Nothing
 
 
+onClickWithPreventDefault msg =
+    custom "click" <|
+        D.succeed
+            { message = msg
+            , stopPropagation = False
+            , preventDefault = True
+            }
+
+
 
 -- DECODERS
 
@@ -293,7 +302,7 @@ viewErrors error =
     case error of
         Just message ->
             div [ class "errors" ]
-                [ div [ class "error", onClick DismissError ] [ text message ]
+                [ div [ class "error", onClickWithPreventDefault DismissError ] [ text message ]
                 ]
 
         _ ->
@@ -332,7 +341,7 @@ viewPowerButton =
     button
         [ type_ "button"
         , class "button power-button"
-        , onClick (SendReceiverCommand TogglePower)
+        , onClickWithPreventDefault (SendReceiverCommand TogglePower)
         ]
         [ img [ src "iconPower.svg" ] [] ]
 
@@ -343,7 +352,7 @@ viewSourceButton =
         [ button
             [ type_ "button"
             , class "button source-button"
-            , onClick (SendReceiverCommand SetInputTv)
+            , onClickWithPreventDefault (SendReceiverCommand SetInputTv)
             ]
             []
         , span [] [ text "tv" ]
@@ -371,7 +380,7 @@ viewVolumeButton srcUrl altText command =
             [ button
                 [ type_ "button"
                 , class "button volume-button"
-                , onClick (SendReceiverCommand command)
+                , onClickWithPreventDefault (SendReceiverCommand command)
                 ]
                 [ img [ src srcUrl, alt altText ] [] ]
             ]
@@ -395,7 +404,7 @@ viewMuteButton =
         [ button
             [ type_ "button"
             , class "button mute-button"
-            , onClick (SendReceiverCommand ToggleMute)
+            , onClickWithPreventDefault (SendReceiverCommand ToggleMute)
             ]
             []
         , text "mute"
