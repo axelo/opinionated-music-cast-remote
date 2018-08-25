@@ -1,5 +1,5 @@
-const { send, createError } = require('micro');
-const { router, get } = require('microrouter');
+const { send, createError, text } = require('micro');
+const { router, get, post } = require('microrouter');
 const http = require('http');
 const eventServer = require('dgram').createSocket('udp4');
 
@@ -12,8 +12,7 @@ let eventClients = [];
 const sendEventToClients = data => {
   const eventMessage = 'data: ' + JSON.stringify(data) + '\n\n';
 
-  console.log('Sending event', data);
-  console.log('Nb of eventClients', eventClients.length);
+  console.log('Sending event', data, 'to', eventClients.length, 'client (s)');
 
   eventClients.forEach(res => res.write(eventMessage));
 };
@@ -67,6 +66,11 @@ const request = (path, headers, ignoreResponseCode) =>
       );
     });
   });
+
+const requestStatus = () =>
+  request('/YamahaExtendedControl/v1/main/getStatus').then(
+    musicCastStatusToStatus
+  );
 
 const musicCastStatusToStatus = musicCastStatus => ({
   isPowerOn: musicCastStatus.power === 'on',
@@ -122,10 +126,47 @@ const convertToEventData = body => {
   };
 };
 
-const getStatus = async (req, res) => {
-  const body = await request('/YamahaExtendedControl/v1/main/getStatus');
-  const transformed = musicCastStatusToStatus(body);
-  send(res, 200, transformed);
+const postCommand = async (req, res) => {
+  const command = await text(req);
+  const requestCommand = asRequestCommand(command);
+
+  if (requestCommand) {
+    await requestCommand();
+    send(res, 204);
+  } else {
+    send(res, 400);
+  }
+};
+
+const asRequestCommand = command => {
+  switch (command) {
+    case 'volumeup':
+      return () =>
+        request('/YamahaExtendedControl/v1/main/setVolume?volume=up');
+    case 'volumedown':
+      return () =>
+        request('/YamahaExtendedControl/v1/main/setVolume?volume=down');
+    case 'togglemute':
+      return () =>
+        requestStatus().then(status =>
+          request(
+            '/YamahaExtendedControl/v1/main/setMute?enable=' + !status.isMuted
+          )
+        );
+    case 'inputtv':
+      return () =>
+        request('/YamahaExtendedControl/v1/main/setInput?input=bd_dvd');
+
+    case 'togglepower':
+      requestStatus().then(status =>
+        request(
+          '/YamahaExtendedControl/v1/main/setPower?power=' +
+            (status.isPowerOn ? 'standby' : 'on')
+        )
+      );
+    default:
+      return undefined;
+  }
 };
 
 const events = (req, res) => {
@@ -140,8 +181,7 @@ const events = (req, res) => {
 
   res.write('data: { "tag": "connected", "data": null }\n\n');
 
-  request('/YamahaExtendedControl/v1/main/getStatus')
-    .then(musicCastStatusToStatus)
+  requestStatus()
     .then(status => {
       res.write(
         'data: ' + JSON.stringify({ tag: 'status', data: status }) + '\n\n'
@@ -215,9 +255,9 @@ eventServer.on('listening', () => {
       true
     )
       .then(() => console.log('Subscribing on receiver events'))
-      .catch(err => {
-        console.error('Could not start subscribing on receiver events', err);
-      });
+      .catch(err =>
+        console.error('Could not start subscribing on receiver events', err)
+      );
 
     setTimeout(subscribeOnReceiverEvents, 5 * 60 * 1000);
   };
@@ -285,7 +325,7 @@ const handleKeypress = (str, key) => {
 process.stdin.on('keypress', handleKeypress);
 
 module.exports = router(
-  get('/api/status', getStatus),
+  post('/api/command', postCommand),
   get('/api/events', events),
   get('*', notFound)
 );

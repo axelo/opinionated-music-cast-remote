@@ -3,6 +3,7 @@ module Main exposing (main)
 import Browser
 import Html exposing (Html, button, div, footer, header, img, main_, section, span, text)
 import Html.Attributes exposing (alt, class, src, type_)
+import Html.Events exposing (onClick)
 import Http
 import Json.Decode as D
 import Ports exposing (receiverEvent)
@@ -21,6 +22,9 @@ type alias Model =
 type Msg
     = ReceiverEventError String
     | GotReceiverEvent ReceiverEvent
+    | SendReceiverCommand ReceiverCommand
+    | CommandSent (Result Http.Error String)
+    | DismissError
 
 
 type Status
@@ -41,12 +45,33 @@ type ReceiverEvent
     | EventUnkown String
 
 
+type ReceiverCommand
+    = VolumeUp
+    | VolumeDown
+    | SetInputTv
+    | TogglePower
+    | ToggleMute
+
+
 type alias ReceiverStatus =
     { isPowerOn : Bool
     , isInputTv : Bool
     , isMuted : Bool
     , volume : Int
     }
+
+
+
+-- MAIN
+
+
+main =
+    Browser.document
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
 
 
 
@@ -66,7 +91,7 @@ init flags =
 -- UPDATE
 
 
-update : Msg -> Model -> ( Model, Cmd msg )
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GotReceiverEvent event ->
@@ -98,6 +123,44 @@ update msg model =
         ReceiverEventError error ->
             ( { model | error = Just error }, Cmd.none )
 
+        SendReceiverCommand command ->
+            ( model, postCommandRequest command )
+
+        CommandSent result ->
+            case result of
+                Ok _ ->
+                    ( model, Cmd.none )
+
+                Err error ->
+                    ( { model | error = Just "Command failed" }, Cmd.none )
+
+        DismissError ->
+            ( { model | error = Nothing }, Cmd.none )
+
+
+
+-- COMMANDS / SUBSCRIPTIONS
+
+
+postCommandRequest : ReceiverCommand -> Cmd Msg
+postCommandRequest command =
+    let
+        body =
+            Http.stringBody "text/plain" (commandToPostCommand command)
+
+        request =
+            Http.request
+                { method = "POST"
+                , headers = []
+                , url = "/api/command"
+                , body = body
+                , expect = Http.expectString
+                , timeout = Nothing
+                , withCredentials = False
+                }
+    in
+    Http.send CommandSent request
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -124,6 +187,25 @@ setStatus status setter =
 
         _ ->
             status
+
+
+commandToPostCommand : ReceiverCommand -> String
+commandToPostCommand command =
+    case command of
+        VolumeUp ->
+            "volumeup"
+
+        VolumeDown ->
+            "volumedown"
+
+        ToggleMute ->
+            "togglemute"
+
+        TogglePower ->
+            "togglepower"
+
+        SetInputTv ->
+            "inputtv"
 
 
 asHeaderIndicators status =
@@ -194,7 +276,7 @@ receiverStatusDecoder =
 -- VIEW
 
 
-view : Model -> Browser.Document msg
+view : Model -> Browser.Document Msg
 view model =
     Browser.Document "MusicCast Remote"
         [ main_ [ class "main" ]
@@ -202,8 +284,20 @@ view model =
             , section [ class "section section-source" ] [ viewSourceButton ]
             , viewVolumeSection (getVolume model.status)
             , footer [ class "footer" ] [ text "yamaha" ]
+            , viewErrors model.error
             ]
         ]
+
+
+viewErrors error =
+    case error of
+        Just message ->
+            div [ class "errors" ]
+                [ div [ class "error", onClick DismissError ] [ text message ]
+                ]
+
+        _ ->
+            text ""
 
 
 viewHeader { isPowerOn, isMuted, isInputTv } =
@@ -233,24 +327,36 @@ viewHeaderIndicator caption inactiveClass activeClass isActive =
         ]
 
 
+viewPowerButton : Html Msg
 viewPowerButton =
-    button [ type_ "button", class "button power-button" ]
+    button
+        [ type_ "button"
+        , class "button power-button"
+        , onClick (SendReceiverCommand TogglePower)
+        ]
         [ img [ src "iconPower.svg" ] [] ]
 
 
+viewSourceButton : Html Msg
 viewSourceButton =
     div [ class "source-button-container" ]
-        [ button [ type_ "button", class "button source-button" ] []
+        [ button
+            [ type_ "button"
+            , class "button source-button"
+            , onClick (SendReceiverCommand SetInputTv)
+            ]
+            []
         , span [] [ text "tv" ]
         ]
 
 
+viewVolumeSection : Maybe Int -> Html Msg
 viewVolumeSection volume =
     section [ class "section section-volume" ]
         [ div [ class "volume-container" ]
-            [ viewVolumeButton "iconPlus.svg" "Volume up"
+            [ viewVolumeButton "iconPlus.svg" "Volume up" VolumeUp
             , viewVolumeValue volume
-            , viewVolumeButton "iconMinus.svg" "Volume down"
+            , viewVolumeButton "iconMinus.svg" "Volume down" VolumeDown
             , viewVolumeLines
             , div [ class "volume-section-fake-mute-height" ] []
             ]
@@ -258,10 +364,15 @@ viewVolumeSection volume =
         ]
 
 
-viewVolumeButton srcUrl altText =
+viewVolumeButton : String -> String -> ReceiverCommand -> Html Msg
+viewVolumeButton srcUrl altText command =
     div [ class "volume-button-container" ]
         [ div [ class "volume-button-inner-container" ]
-            [ button [ type_ "button", class "button volume-button" ]
+            [ button
+                [ type_ "button"
+                , class "button volume-button"
+                , onClick (SendReceiverCommand command)
+                ]
                 [ img [ src srcUrl, alt altText ] [] ]
             ]
         ]
@@ -273,25 +384,19 @@ viewVolumeValue volume =
         [ text ("volume " ++ Maybe.withDefault "" (Maybe.map String.fromInt volume) ++ "%") ]
 
 
+viewVolumeLines : Html msg
 viewVolumeLines =
     div [ class "volume-lines" ] []
 
 
+viewMuteButton : Html Msg
 viewMuteButton =
     div [ class "mute-button-container" ]
-        [ button [ type_ "button", class "button mute-button" ] []
+        [ button
+            [ type_ "button"
+            , class "button mute-button"
+            , onClick (SendReceiverCommand ToggleMute)
+            ]
+            []
         , text "mute"
         ]
-
-
-
--- MAIN
-
-
-main =
-    Browser.document
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions = subscriptions
-        }
