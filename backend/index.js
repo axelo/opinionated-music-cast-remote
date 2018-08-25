@@ -142,10 +142,10 @@ const asRequestCommand = command => {
   switch (command) {
     case 'volumeup':
       return () =>
-        request('/YamahaExtendedControl/v1/main/setVolume?volume=up');
+        request('/YamahaExtendedControl/v1/main/setVolume?volume=up&step=2');
     case 'volumedown':
       return () =>
-        request('/YamahaExtendedControl/v1/main/setVolume?volume=down');
+        request('/YamahaExtendedControl/v1/main/setVolume?volume=down&step=2');
     case 'togglemute':
       return () =>
         requestStatus().then(status =>
