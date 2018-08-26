@@ -11,11 +11,9 @@ function connectToEventSource(receiverEventPort, reconnectTimeout) {
     var eventSource = new EventSource('api/events');
 
     eventSource.onerror = function() {
-      if (eventSource.readyState === 2) {
-        receiverEventPort.send({ tag: 'disconnected' });
-        eventSource.close();
-        setTimeout(tryToConnect, reconnectTimeout);
-      }
+      receiverEventPort.send({ tag: 'disconnected' });
+      eventSource.close();
+      setTimeout(tryToConnect, reconnectTimeout);
     };
 
     eventSource.onmessage = function(evt) {

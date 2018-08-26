@@ -212,6 +212,24 @@ body {
   background-color: rgb(0, 255, 0);
 }
 
+.bg-yellow-blink {
+  animation-name: blink-yellow;
+  animation-duration: 1s;
+  animation-timing-function: steps(1, end);
+  animation-iteration-count: infinite;
+}
+
+@keyframes blink-yellow {
+  0%,
+  100% {
+    background-color: rgb(0, 0, 0);
+  }
+
+  50% {
+    background-color: rgb(255, 235, 59);
+  }
+}
+
 .errors {
   position: absolute;
   top: 0;

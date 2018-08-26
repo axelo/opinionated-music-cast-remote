@@ -211,10 +211,10 @@ commandToPostCommand command =
 asHeaderIndicators status =
     case status of
         Status { isPowerOn, isMuted, isInputTv } ->
-            { isPowerOn = isPowerOn, isMuted = isMuted, isInputTv = isInputTv }
+            { isDisconnected = False, isPowerOn = isPowerOn, isMuted = isMuted, isInputTv = isInputTv }
 
         _ ->
-            { isPowerOn = False, isMuted = False, isInputTv = False }
+            { isDisconnected = True, isPowerOn = False, isMuted = False, isInputTv = False }
 
 
 getVolume status =
@@ -309,9 +309,17 @@ viewErrors error =
             text ""
 
 
-viewHeader { isPowerOn, isMuted, isInputTv } =
+viewHeader { isDisconnected, isPowerOn, isMuted, isInputTv } =
     header [ class "header" ]
-        [ viewHeaderIndicator "power" "bg-red" "bg-green" isPowerOn
+        [ viewHeaderIndicator "power"
+            (if isDisconnected then
+                "bg-yellow-blink"
+
+             else
+                "bg-red"
+            )
+            "bg-green"
+            isPowerOn
         , viewHeaderIndicator "tv" "" "bg-green" isInputTv
         , viewHeaderIndicator "mute" "" "bg-green" isMuted
         , viewPowerButton
