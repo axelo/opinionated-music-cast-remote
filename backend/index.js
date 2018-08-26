@@ -182,8 +182,8 @@ const events = (req, res) => {
     Connection: 'keep-alive'
   });
 
-  console.log('Client subscribing to receiver events');
   eventClients.push(res);
+  console.log(eventClients.length, 'client(s) subscribing to receiver events');
 
   res.write('data: { "tag": "connected", "data": null }\n\n');
 
@@ -200,8 +200,12 @@ const events = (req, res) => {
     );
 
   res.socket.on('close', () => {
-    console.log('Client left');
     eventClients = eventClients.filter(clientRes => clientRes !== res);
+    console.log(
+      'Client left,',
+      eventClients.length,
+      'client(s) still subscribing'
+    );
   });
 };
 
@@ -218,6 +222,8 @@ eventServer.on('error', err => {
     throw new Error(
       'Event server port ' + INCOMING_EVENT_SERVER_PORT + ' not available'
     );
+  } else {
+    console.error('eventServer error', err);
   }
 });
 
@@ -286,6 +292,8 @@ eventServer.on('listening', () => {
 eventServer.bind(INCOMING_EVENT_SERVER_PORT, LOCAL_IP);
 
 process.once('SIGUSR2', () => {
+  console.log('Got SIGUSR2');
+
   process.stdin.removeAllListeners('keypress');
 
   try {
