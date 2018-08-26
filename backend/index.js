@@ -397,7 +397,7 @@ server.on('error', err => {
 server.listen(parseInt(process.env.PORT || 4000), () => {
   const gracefulShutdown = () => {
     console.log('\nmicro: Gracefully shutting down. Please wait...');
-    eventServer.stop(() => server.stop(process.exit));
+    eventServer.close(() => server.stop(process.exit));
   };
 
   process.once('SIGINT', gracefulShutdown);
