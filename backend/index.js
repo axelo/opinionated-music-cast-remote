@@ -295,7 +295,7 @@ eventServer.on('listening', () => {
     request(
       '/YamahaExtendedControl/v1',
       {
-        'X-AppName': 'MusicCast/2',
+        'X-AppName': 'MusicCast/1',
         'X-AppPort': port
       },
       true
@@ -312,64 +312,6 @@ eventServer.on('listening', () => {
 });
 
 eventServer.bind(INCOMING_EVENT_SERVER_PORT, LOCAL_IP);
-
-// const debugStatus = {
-//   isPowerOn: false,
-//   isInputTv: false,
-//   isMuted: false,
-//   volume: 0
-// };
-
-// process.once('SIGUSR2', () => {
-//   console.log('Got SIGUSR2');
-
-//   process.stdin.removeAllListeners('keypress');
-
-//   try {
-//     eventServer.close();
-
-//     eventClients = [];
-//   } catch (err) {
-//     console.error('SIGUSR2', err);
-//   }
-// });
-
-// const handleKeypress = (str, key) => {
-//   if (key.ctrl && key.name === 'c') return process.exit();
-
-//   switch (str) {
-//     case 's':
-//       return sendEventToClients({ tag: 'status', data: debugStatus });
-//     case '+':
-//       return sendEventToClients({ tag: 'volume', data: ++debugStatus.volume });
-//     case '-':
-//       return sendEventToClients({ tag: 'volume', data: --debugStatus.volume });
-//     case 'm':
-//       return sendEventToClients({
-//         tag: 'mute',
-//         data: (debugStatus.isMuted = !debugStatus.isMuted)
-//       });
-//     case 'p':
-//       return sendEventToClients(
-//         powerEvent((debugStatus.isPowerOn = !debugStatus.isPowerOn))
-//       );
-//     case 't':
-//       return sendEventToClients({
-//         tag: 'tv',
-//         data: (debugStatus.isInputTv = !debugStatus.isInputTv)
-//       });
-
-//     default:
-//       process.stdout.write(key.sequence);
-//   }
-// };
-
-// if (!process.env.DISABLE_DEBUG_KEYS) {
-// const readline = require('readline');
-// readline.emitKeypressEvents(process.stdin);
-// process.stdin.setRawMode(true);
-// process.stdin.on('keypress', handleKeypress);
-// }
 
 const staticFiles = (req, res) =>
   serveHandler(req, res, {
