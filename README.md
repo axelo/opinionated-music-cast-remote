@@ -16,9 +16,9 @@ Tested on a Yamaha YAS-306
 
     yarn --cwd frontend build:prod
 
-#### Copy or link the build folder under frontend to a folder named public under backend
+#### Copy or link the `build` folder under frontend to a folder named `public` under backend
 
-    cp -R frontend/buld backend/public
+    cp -R frontend/build backend/public
 
 or
 
