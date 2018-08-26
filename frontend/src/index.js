@@ -33,5 +33,8 @@ document.addEventListener('DOMContentLoaded', function(event) {
     throw new Error('Missing port "receiverEvent"');
   }
 
-  connectToEventSource(receiverEventPort, 5000);
+  // iOS workaround to prevent seeing loading wheel forever
+  setTimeout(function() {
+    connectToEventSource(receiverEventPort, 5000);
+  }, 1000);
 });
