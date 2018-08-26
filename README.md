@@ -30,7 +30,7 @@ Specify the following env variables before starting the server
 
     YAMAHA_IP # The ip address to your receiver
     LOCAL_IP # Your local ip address to use, 0.0.0.0 could work in some setups
-    PORT # Port listening for events from the receiver, defaults to 41100
+    EVENT_PORT # Port listening for events from the receiver, defaults to 41100
 
 Like this
 
@@ -46,7 +46,7 @@ Specify the following env variables before starting the server
 
     YAMAHA_IP # The ip address to your receiver
     LOCAL_IP # Your local ip address to use, 0.0.0.0 could work in some setups
-    PORT # Port listening for events from the receiver, defaults to 41100
+    EVENT_PORT # Port listening for events from the receiver, defaults to 41100
 
 Like this
 

@@ -6,7 +6,7 @@ const eventServer = require('dgram').createSocket('udp4');
 
 const YAMAHA_IP = process.env.YAMAHA_IP || '192.168.1.216';
 const LOCAL_IP = process.env.LOCAL_IP || '192.168.1.187';
-const INCOMING_EVENT_SERVER_PORT = parseInt(process.env.PORT) || 41100;
+const INCOMING_EVENT_SERVER_PORT = parseInt(process.env.EVENT_PORT) || 41100;
 
 let eventClients = [];
 
