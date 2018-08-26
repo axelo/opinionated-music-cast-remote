@@ -373,7 +373,7 @@ eventServer.bind(INCOMING_EVENT_SERVER_PORT, LOCAL_IP);
 
 const staticFiles = (req, res) =>
   serveHandler(req, res, {
-    public: 'public',
+    public: __dirname + '/public',
     directoryListing: false
   });
 
