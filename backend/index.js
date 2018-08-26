@@ -295,7 +295,7 @@ eventServer.on('listening', () => {
     request(
       '/YamahaExtendedControl/v1',
       {
-        'X-AppName': 'MusicCast/1',
+        'X-AppName': 'MusicCast/2',
         'X-AppPort': port
       },
       true
