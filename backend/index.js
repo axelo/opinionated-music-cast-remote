@@ -1,4 +1,4 @@
-const { send, createError, text } = require('micro');
+const { default: micro, send, createError, text } = require('micro');
 const { router, get, post } = require('microrouter');
 const serveHandler = require('serve-handler');
 const http = require('http');
@@ -78,6 +78,11 @@ const musicCastStatusToStatus = musicCastStatus => ({
   isInputTv: musicCastStatus.input === 'bd_dvd',
   isMuted: musicCastStatus.mute === true,
   volume: musicCastStatus.volume || 0
+});
+
+const powerEvent = enabled => ({
+  tag: 'power',
+  data: enabled
 });
 
 const convertToEventData = body => {
@@ -213,7 +218,7 @@ const notFound = (req, res) => send(res, 404, { message: 'Route not found' });
 
 eventServer.on('close', () => {
   console.log('Closing event server');
-  eventClients.forEach(res => res.emit('close'));
+  eventClients.forEach(res => res.end());
   eventClients = [];
 });
 
@@ -291,69 +296,63 @@ eventServer.on('listening', () => {
 
 eventServer.bind(INCOMING_EVENT_SERVER_PORT, LOCAL_IP);
 
-process.once('SIGUSR2', () => {
-  console.log('Got SIGUSR2');
+// const debugStatus = {
+//   isPowerOn: false,
+//   isInputTv: false,
+//   isMuted: false,
+//   volume: 0
+// };
 
-  process.stdin.removeAllListeners('keypress');
+// process.once('SIGUSR2', () => {
+//   console.log('Got SIGUSR2');
 
-  try {
-    eventServer.close();
+//   process.stdin.removeAllListeners('keypress');
 
-    eventClients = [];
-  } catch (err) {
-    console.error('SIGUSR2', err);
-  }
-});
+//   try {
+//     eventServer.close();
 
-const debugStatus = {
-  isPowerOn: false,
-  isInputTv: false,
-  isMuted: false,
-  volume: 0
-};
+//     eventClients = [];
+//   } catch (err) {
+//     console.error('SIGUSR2', err);
+//   }
+// });
 
-const powerEvent = enabled => ({
-  tag: 'power',
-  data: enabled
-});
+// const handleKeypress = (str, key) => {
+//   if (key.ctrl && key.name === 'c') return process.exit();
 
-const handleKeypress = (str, key) => {
-  if (key.ctrl && key.name === 'c') return process.exit();
+//   switch (str) {
+//     case 's':
+//       return sendEventToClients({ tag: 'status', data: debugStatus });
+//     case '+':
+//       return sendEventToClients({ tag: 'volume', data: ++debugStatus.volume });
+//     case '-':
+//       return sendEventToClients({ tag: 'volume', data: --debugStatus.volume });
+//     case 'm':
+//       return sendEventToClients({
+//         tag: 'mute',
+//         data: (debugStatus.isMuted = !debugStatus.isMuted)
+//       });
+//     case 'p':
+//       return sendEventToClients(
+//         powerEvent((debugStatus.isPowerOn = !debugStatus.isPowerOn))
+//       );
+//     case 't':
+//       return sendEventToClients({
+//         tag: 'tv',
+//         data: (debugStatus.isInputTv = !debugStatus.isInputTv)
+//       });
 
-  switch (str) {
-    case 's':
-      return sendEventToClients({ tag: 'status', data: debugStatus });
-    case '+':
-      return sendEventToClients({ tag: 'volume', data: ++debugStatus.volume });
-    case '-':
-      return sendEventToClients({ tag: 'volume', data: --debugStatus.volume });
-    case 'm':
-      return sendEventToClients({
-        tag: 'mute',
-        data: (debugStatus.isMuted = !debugStatus.isMuted)
-      });
-    case 'p':
-      return sendEventToClients(
-        powerEvent((debugStatus.isPowerOn = !debugStatus.isPowerOn))
-      );
-    case 't':
-      return sendEventToClients({
-        tag: 'tv',
-        data: (debugStatus.isInputTv = !debugStatus.isInputTv)
-      });
+//     default:
+//       process.stdout.write(key.sequence);
+//   }
+// };
 
-    default:
-      process.stdout.write(key.sequence);
-  }
-};
-
-if (!process.env.DISABLE_DEBUG_KEYS) {
-  const readline = require('readline');
-
-  readline.emitKeypressEvents(process.stdin);
-  process.stdin.setRawMode(true);
-  process.stdin.on('keypress', handleKeypress);
-}
+// if (!process.env.DISABLE_DEBUG_KEYS) {
+// const readline = require('readline');
+// readline.emitKeypressEvents(process.stdin);
+// process.stdin.setRawMode(true);
+// process.stdin.on('keypress', handleKeypress);
+// }
 
 const staticFiles = (req, res) =>
   serveHandler(req, res, {
@@ -361,9 +360,28 @@ const staticFiles = (req, res) =>
     directoryListing: false
   });
 
-module.exports = router(
-  post('/api/command', postCommand),
-  get('/api/events', events),
-  get('/api/*', notFound),
-  get('*', staticFiles)
+const server = micro(
+  router(
+    post('/api/command', postCommand),
+    get('/api/events', events),
+    get('/api/*', notFound),
+    get('*', staticFiles)
+  )
 );
+
+server.on('error', err => {
+  console.error('micro:', err.stack);
+  process.exit(1);
+});
+
+server.listen(process.env.PORT || 4000, LOCAL_IP, () => {
+  const gracefulShutdown = () => {
+    console.log('\nmicro: Gracefully shutting down. Please wait...');
+    eventServer.close(() => server.close(process.exit));
+  };
+
+  process.once('SIGINT', gracefulShutdown);
+  process.once('SIGTERM', gracefulShutdown);
+
+  console.log(`micro: Accepting connections on port ${server.address().port}`);
+});

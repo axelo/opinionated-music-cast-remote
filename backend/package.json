@@ -6,11 +6,11 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "micro-dev -p ${PORT-4000}",
-    "start": "micro -l tcp://0.0.0.0:${PORT-4000}"
+    "dev": "nodemon npm run start",
+    "start": "node ."
   },
   "devDependencies": {
-    "micro-dev": "^3.0.0"
+    "nodemon": "^1.18.3"
   },
   "dependencies": {
     "micro": "^9.3.3",
