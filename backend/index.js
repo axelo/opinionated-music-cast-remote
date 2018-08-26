@@ -1,3 +1,4 @@
+const stoppable = require('stoppable');
 const { default: micro, send, createError, text } = require('micro');
 const { router, get, post } = require('microrouter');
 const serveHandler = require('serve-handler');
@@ -376,12 +377,14 @@ const staticFiles = (req, res) =>
     directoryListing: false
   });
 
-const server = micro(
-  router(
-    post('/api/command', postCommand),
-    get('/api/events', events),
-    get('/api/*', notFound),
-    get('*', staticFiles)
+const server = stoppable(
+  micro(
+    router(
+      post('/api/command', postCommand),
+      get('/api/events', events),
+      get('/api/*', notFound),
+      get('*', staticFiles)
+    )
   )
 );
 
@@ -393,7 +396,7 @@ server.on('error', err => {
 server.listen(parseInt(process.env.PORT || 4000), () => {
   const gracefulShutdown = () => {
     console.log('\nmicro: Gracefully shutting down. Please wait...');
-    eventServer.close(() => server.close(process.exit));
+    eventServer.close(() => server.stop(process.exit));
   };
 
   process.once('SIGINT', gracefulShutdown);
