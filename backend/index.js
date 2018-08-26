@@ -15,7 +15,7 @@ const sendEventToClients = data => {
 
   console.log('Sending event', data, 'to', eventClients.length, 'client (s)');
 
-  eventClients.forEach(res => res.write(eventMessage));
+  eventClients.forEach(client => client.res.write(eventMessage));
 };
 
 const request = (path, headers, ignoreResponseCode) =>
@@ -180,6 +180,12 @@ const asRequestCommand = command => {
   }
 };
 
+const getIpFromRequest = req =>
+  (req.headers['x-forwarded-for'] || '').split(',').pop() ||
+  req.connection.remoteAddress ||
+  req.socket.remoteAddress ||
+  req.connection.socket.remoteAddress;
+
 const events = (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -187,8 +193,18 @@ const events = (req, res) => {
     Connection: 'keep-alive'
   });
 
-  eventClients.push(res);
-  console.log(eventClients.length, 'client(s) subscribing to receiver events');
+  const clientIp = getIpFromRequest(req);
+
+  eventClients = eventClients
+    .filter(client => client.ip !== clientIp)
+    .concat([{ ip: clientIp, res }]);
+
+  console.log(
+    eventClients.length +
+      ' client(s) (' +
+      eventClients.map(c => c.ip).join(', ') +
+      ') subscribing to receiver events'
+  );
 
   res.write('data: { "tag": "connected", "data": null }\n\n');
 
@@ -205,7 +221,7 @@ const events = (req, res) => {
     );
 
   res.socket.on('close', () => {
-    eventClients = eventClients.filter(clientRes => clientRes !== res);
+    eventClients = eventClients.filter(client => client.ip !== clientIp);
     console.log(
       'Client left,',
       eventClients.length,
@@ -218,7 +234,7 @@ const notFound = (req, res) => send(res, 404, { message: 'Route not found' });
 
 eventServer.on('close', () => {
   console.log('Closing event server');
-  eventClients.forEach(res => res.end());
+  eventClients.forEach(client => client.res.end());
   eventClients = [];
 });
 
