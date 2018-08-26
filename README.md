@@ -12,11 +12,11 @@ Tested on a Yamaha YAS-306
 
 ### Production
 
-Build the frontend
+#### Build the frontend
 
     yarn --cwd frontend build:prod
 
-Copy or link the build folder under frontend to a folder named public under backend
+#### Copy or link the build folder under frontend to a folder named public under backend
 
     cp -R frontend/buld backend/public
 
@@ -24,19 +24,35 @@ or
 
     ln -s frontend/build backend/public
 
-Start the backend server
+#### Start the backend server
 
-    yarn --cwd backend start
+Specify the following env variables before starting the server
+
+    YAMAHA_IP # The ip address to your receiver
+    LOCAL_IP # Your local ip address to use, 0.0.0.0 could work in some setups
+    PORT # Port listening for events from the receiver, defaults to 41100
+
+Like this
+
+    YAMAHA_IP=192.168.1.216 LOCAL_IP=192.168.1.187 yarn --cwd backend start
 
 Open a browser at `http://localhost:4000`
 
 ### Development
 
-Start the api-server
+#### Start the api-server
 
-    yarn --cwd backend dev
+Specify the following env variables before starting the server
 
-Start the frontend dev-server
+    YAMAHA_IP # The ip address to your receiver
+    LOCAL_IP # Your local ip address to use, 0.0.0.0 could work in some setups
+    PORT # Port listening for events from the receiver, defaults to 41100
+
+Like this
+
+    YAMAHA_IP=192.168.1.216 LOCAL_IP=192.168.1.187 yarn --cwd backend dev
+
+#### Start the frontend dev-server
 
     yarn --cwd frontend start
 
