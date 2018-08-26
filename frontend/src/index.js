@@ -6,6 +6,25 @@ function parseMessageData(data) {
   }
 }
 
+function connectToEventSource(receiverEventPort, reconnectTimeout) {
+  function tryToConnect() {
+    var eventSource = new EventSource('api/events');
+
+    eventSource.onerror = function(err) {
+      if (eventSource.readyState === 2) {
+        receiverEventPort.send({ tag: 'disconnected' });
+        setTimeout(tryToConnect, reconnectTimeout);
+      }
+    };
+
+    eventSource.onmessage = function(e) {
+      receiverEventPort.send(parseMessageData(e.data));
+    };
+  }
+
+  tryToConnect();
+}
+
 document.addEventListener('DOMContentLoaded', function(event) {
   var app = Elm.Main.init({ flags: 1 });
   var receiverEventPort = app.ports.receiverEvent;
@@ -14,15 +33,5 @@ document.addEventListener('DOMContentLoaded', function(event) {
     throw new Error('Missing port "receiverEvent"');
   }
 
-  var eventSource = new EventSource('api/events');
-
-  eventSource.onerror = function(err) {
-    if (eventSource.readyState === 2) {
-      receiverEventPort.send({ tag: 'disconnected' });
-    }
-  };
-
-  eventSource.onmessage = function(e) {
-    receiverEventPort.send(parseMessageData(e.data));
-  };
+  connectToEventSource(receiverEventPort, 5000);
 });
