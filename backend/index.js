@@ -234,7 +234,7 @@ const notFound = (req, res) => send(res, 404, { message: 'Route not found' });
 
 eventServer.on('close', () => {
   console.log('Closing event server');
-  eventClients.forEach(client => client.res.end());
+  eventClients.forEach(client => client.res.socket.destroy());
   eventClients = [];
 });
 
@@ -390,7 +390,7 @@ server.on('error', err => {
   process.exit(1);
 });
 
-server.listen(process.env.PORT || 4000, LOCAL_IP, () => {
+server.listen(parseInt(process.env.PORT || 4000), () => {
   const gracefulShutdown = () => {
     console.log('\nmicro: Gracefully shutting down. Please wait...');
     eventServer.close(() => server.close(process.exit));
