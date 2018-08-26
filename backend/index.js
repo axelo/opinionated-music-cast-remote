@@ -297,11 +297,6 @@ process.once('SIGUSR2', () => {
   }
 });
 
-const readline = require('readline');
-
-readline.emitKeypressEvents(process.stdin);
-process.stdin.setRawMode(true);
-
 const debugStatus = {
   isPowerOn: false,
   isInputTv: false,
@@ -344,7 +339,13 @@ const handleKeypress = (str, key) => {
   }
 };
 
-process.stdin.on('keypress', handleKeypress);
+if (!process.env.DISABLE_DEBUG_KEYS) {
+  const readline = require('readline');
+
+  readline.emitKeypressEvents(process.stdin);
+  process.stdin.setRawMode(true);
+  process.stdin.on('keypress', handleKeypress);
+}
 
 const staticFiles = (req, res) =>
   serveHandler(req, res, {
