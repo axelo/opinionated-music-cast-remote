@@ -2,7 +2,7 @@
 
 ## Why
 
-Fun project for trying out Elm on the frontend, plus very convenient when hanging out in the sofa and the real remote is at least 2 meters away.
+Fun project for trying out Elm on the frontend, plus very convenient when hanging out in the sofa and the real remote is at least two meters away.
 
 Tested on a Yamaha YAS-306
 
@@ -28,7 +28,7 @@ Start the backend server
 
     yarn --cwd backend start
 
-Open the browser on `http://localhost:4000`
+Open a browser at `http://localhost:4000`
 
 ### Development
 
@@ -38,6 +38,6 @@ Start the api-server
 
 Start the frontend dev-server
 
-    yarn --cwd backend start
+    yarn --cwd frontend start
 
-Open the browser on `http://localhost:3000`
+Open a browser at `http://localhost:3000`
