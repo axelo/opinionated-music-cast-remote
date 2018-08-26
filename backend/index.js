@@ -385,7 +385,8 @@ const server = stoppable(
       get('/api/*', notFound),
       get('*', staticFiles)
     )
-  )
+  ),
+  3000
 );
 
 server.on('error', err => {
