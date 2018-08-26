@@ -1,5 +1,6 @@
 const { send, createError, text } = require('micro');
 const { router, get, post } = require('microrouter');
+const serveHandler = require('serve-handler');
 const http = require('http');
 const eventServer = require('dgram').createSocket('udp4');
 
@@ -138,6 +139,12 @@ const postCommand = async (req, res) => {
   }
 };
 
+const requestSetPower = enabled =>
+  request(
+    '/YamahaExtendedControl/v1/main/setPower?power=' +
+      (enabled ? 'on' : 'standby')
+  );
+
 const asRequestCommand = command => {
   switch (command) {
     case 'volumeup':
@@ -158,12 +165,11 @@ const asRequestCommand = command => {
         request('/YamahaExtendedControl/v1/main/setInput?input=bd_dvd');
 
     case 'togglepower':
-      requestStatus().then(status =>
-        request(
-          '/YamahaExtendedControl/v1/main/setPower?power=' +
-            (status.isPowerOn ? 'standby' : 'on')
-        )
-      );
+      return () =>
+        requestStatus()
+          .then(status => !status.isPowerOn)
+          .then(requestSetPower);
+
     default:
       return undefined;
   }
@@ -233,7 +239,19 @@ eventServer.on('message', msg => {
     return;
   }
 
-  sendEventToClients(eventData.data);
+  const event = eventData.data;
+
+  sendEventToClients(event);
+
+  if (event.tag === 'mute' && event.data === false) {
+    // When mute is enabled and we set power to standby the yas-306 receiver will only send
+    // mute disabled event and then never send the power standby event, so resend current power status
+    // on mute disabled
+    requestStatus()
+      .then(status => status.isPowerOn)
+      .then(powerEvent)
+      .then(sendEventToClients);
+  }
 });
 
 eventServer.on('listening', () => {
@@ -291,6 +309,11 @@ const debugStatus = {
   volume: 0
 };
 
+const powerEvent = enabled => ({
+  tag: 'power',
+  data: enabled
+});
+
 const handleKeypress = (str, key) => {
   if (key.ctrl && key.name === 'c') return process.exit();
 
@@ -307,10 +330,9 @@ const handleKeypress = (str, key) => {
         data: (debugStatus.isMuted = !debugStatus.isMuted)
       });
     case 'p':
-      return sendEventToClients({
-        tag: 'power',
-        data: (debugStatus.isPowerOn = !debugStatus.isPowerOn)
-      });
+      return sendEventToClients(
+        powerEvent((debugStatus.isPowerOn = !debugStatus.isPowerOn))
+      );
     case 't':
       return sendEventToClients({
         tag: 'tv',
@@ -324,8 +346,15 @@ const handleKeypress = (str, key) => {
 
 process.stdin.on('keypress', handleKeypress);
 
+const staticFiles = (req, res) =>
+  serveHandler(req, res, {
+    public: 'public',
+    directoryListing: false
+  });
+
 module.exports = router(
   post('/api/command', postCommand),
   get('/api/events', events),
-  get('*', notFound)
+  get('/api/*', notFound),
+  get('*', staticFiles)
 );
