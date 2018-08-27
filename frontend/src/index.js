@@ -35,5 +35,5 @@ document.addEventListener('DOMContentLoaded', function(event) {
   // iOS workaround to prevent seeing loading wheel forever
   setTimeout(function() {
     connectToEventSource(receiverEventPort, 5000);
-  }, 1000);
+  }, 0);
 });

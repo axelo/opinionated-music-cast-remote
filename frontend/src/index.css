@@ -215,6 +215,7 @@ body {
 .bg-yellow-blink {
   animation-name: blink-yellow;
   animation-duration: 1s;
+  animation-delay: 1s;
   animation-timing-function: steps(1, end);
   animation-iteration-count: infinite;
 }
