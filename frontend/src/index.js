@@ -1,19 +1,56 @@
-function parseMessageData(data) {
-  try {
-    return JSON.parse(data);
-  } catch (err) {
-    return { tag: 'invalidEvent', data: data };
-  }
-}
+function connectToEventSource(
+  receiverEventPort,
+  reconnectTimeout,
+  pingTimeout
+) {
+  var eventSource;
+  var reconnectTimeoutId;
+  var pingTimeoutId;
 
-function connectToEventSource(receiverEventPort, reconnectTimeout) {
+  function clearPingTimeout() {
+    if (pingTimeoutId) {
+      clearTimeout(pingTimeoutId);
+      pingTimeoutId = undefined;
+    }
+  }
+
+  function clearReconnectTimeout() {
+    if (reconnectTimeoutId) {
+      clearTimeout(reconnectTimeoutId);
+      reconnectTimeoutId = undefined;
+    }
+  }
+
+  function parseMessageData(data) {
+    try {
+      return JSON.parse(data);
+    } catch (err) {
+      return { tag: 'invalidEvent', data: data };
+    }
+  }
+
   function tryToConnect() {
-    var eventSource = new EventSource('api/events');
+    if (eventSource) {
+      eventSource.close();
+    }
+
+    eventSource = new EventSource('api/events');
+
+    eventSource.onopen = function() {
+      clearPingTimeout();
+      clearReconnectTimeout();
+      pingTimeoutId = setTimeout(tryToConnect, pingTimeout);
+    };
 
     eventSource.onerror = function() {
+      clearPingTimeout();
+      clearReconnectTimeout();
+
       receiverEventPort.send({ tag: 'disconnected' });
+
       eventSource.close();
-      setTimeout(tryToConnect, reconnectTimeout);
+
+      reconnectTimeoutId = setTimeout(tryToConnect, reconnectTimeout);
     };
 
     eventSource.onmessage = function(evt) {
@@ -32,8 +69,8 @@ document.addEventListener('DOMContentLoaded', function(event) {
     throw new Error('Missing port "receiverEvent"');
   }
 
-  // iOS workaround to prevent seeing loading wheel forever
+  // Delay connection to prevent seeing loading wheel forever on iOS
   setTimeout(function() {
-    connectToEventSource(receiverEventPort, 5000);
+    connectToEventSource(receiverEventPort, 5 * 1000, 30 * 1000);
   }, 0);
 });
