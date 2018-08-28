@@ -28,8 +28,7 @@ type Msg
 
 
 type Status
-    = WaitingForConnection
-    | WaitingForStatus
+    = WaitingForStatus
     | Disconnected
     | Status ReceiverStatus
 
@@ -80,7 +79,7 @@ main =
 
 init : Int -> ( Model, Cmd Msg )
 init flags =
-    ( { status = WaitingForConnection
+    ( { status = WaitingForStatus
       , error = Nothing
       }
     , Cmd.none

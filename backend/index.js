@@ -207,8 +207,6 @@ const events = (req, res) => {
       ') subscribing to receiver events'
   );
 
-  res.write('data: { "tag": "connected", "data": null }\n\n');
-
   requestStatus()
     .then(status => {
       res.write(
