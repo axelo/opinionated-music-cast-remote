@@ -39,6 +39,7 @@ function connectToEventSource(
     eventSource.onopen = function() {
       clearPingTimeout();
       clearReconnectTimeout();
+
       pingTimeoutId = setTimeout(tryToConnect, pingTimeout);
     };
 
@@ -71,6 +72,6 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
   // Delay connection to prevent seeing loading wheel forever on iOS
   setTimeout(function() {
-    connectToEventSource(receiverEventPort, 5 * 1000, 30 * 1000);
+    connectToEventSource(receiverEventPort, 5 * 1000, 60 * 1000);
   }, 0);
 });

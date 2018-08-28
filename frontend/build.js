@@ -108,6 +108,14 @@ elmMake(
     fs.copyFileSync('src/iconPower.svg', OUTPUT_DIR + '/iconPower.svg');
     fs.copyFileSync('src/iconPlus.svg', OUTPUT_DIR + '/iconPlus.svg');
     fs.copyFileSync('src/iconMinus.svg', OUTPUT_DIR + '/iconMinus.svg');
+    fs.copyFileSync(
+      'src/apple_splash_640.png',
+      OUTPUT_DIR + '/apple_splash_640.png'
+    );
+    fs.copyFileSync(
+      'src/apple_splash_750.png',
+      OUTPUT_DIR + '/apple_splash_750.png'
+    );
 
     removeOldBundleFiles(pathToBundle);
   })
