@@ -306,7 +306,9 @@ eventServer.on('listening', () => {
     setTimeout(subscribeOnReceiverEvents, 5 * 60 * 1000);
   };
 
-  subscribeOnReceiverEvents();
+  if (!process.env.DISABLE_EVENT_SUB) {
+    subscribeOnReceiverEvents();
+  }
 });
 
 eventServer.bind(INCOMING_EVENT_SERVER_PORT, LOCAL_IP);
