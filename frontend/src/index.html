@@ -16,12 +16,14 @@
         href="apple_splash_750.png"
         media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 
-    <link href="index.css"
-        rel="stylesheet">
+    <link rel="stylesheet"
+        href="index.css"
+        media="none"
+        onload="if (media !== 'all') media='all'">
 
-    <script src="index.js"></script>
+    <script src="index.js" defer></script>
 </head>
 
-<body></body>
+<body style="background-color: rgb(10, 10, 10)"></body>
 
 </html>

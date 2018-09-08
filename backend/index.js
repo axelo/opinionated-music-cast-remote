@@ -14,7 +14,14 @@ let eventClients = [];
 const sendEventToClients = data => {
   const eventMessage = 'data: ' + JSON.stringify(data) + '\n\n';
 
-  console.log('Sending event', data, 'to', eventClients.length, 'client (s)');
+  console.log(
+    'Sending event',
+    data,
+    'to',
+    eventClients.length,
+    'client (s)',
+    eventClients.map(c => c.ip).join(', ')
+  );
 
   eventClients.forEach(client => client.res.write(eventMessage));
 };

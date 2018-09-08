@@ -225,13 +225,20 @@ getVolume status =
             Nothing
 
 
-onClickWithPreventDefault msg =
-    custom "click" <|
-        D.succeed
-            { message = msg
-            , stopPropagation = False
-            , preventDefault = True
-            }
+onClickWithPreventDefault msg attribs =
+    let
+        encodedMsg =
+            D.succeed
+                { message = msg
+                , stopPropagation = False
+                , preventDefault = True
+                }
+    in
+    List.append
+        attribs
+        [ custom "touchstart" encodedMsg
+        , custom "click" encodedMsg
+        ]
 
 
 
@@ -301,7 +308,7 @@ viewErrors error =
     case error of
         Just message ->
             div [ class "errors" ]
-                [ div [ class "error", onClickWithPreventDefault DismissError ] [ text message ]
+                [ div (onClickWithPreventDefault DismissError [ class "error" ]) [ text message ]
                 ]
 
         _ ->
@@ -346,10 +353,11 @@ viewHeaderIndicator caption inactiveClass activeClass isActive =
 viewPowerButton : Html Msg
 viewPowerButton =
     button
-        [ type_ "button"
-        , class "button power-button"
-        , onClickWithPreventDefault (SendReceiverCommand TogglePower)
-        ]
+        (onClickWithPreventDefault (SendReceiverCommand TogglePower)
+            [ type_ "button"
+            , class "button power-button"
+            ]
+        )
         [ img [ src "iconPower.svg" ] [] ]
 
 
@@ -357,10 +365,11 @@ viewSourceButton : Html Msg
 viewSourceButton =
     div [ class "source-button-container" ]
         [ button
-            [ type_ "button"
-            , class "button source-button"
-            , onClickWithPreventDefault (SendReceiverCommand SetInputTv)
-            ]
+            (onClickWithPreventDefault (SendReceiverCommand SetInputTv)
+                [ type_ "button"
+                , class "button source-button"
+                ]
+            )
             []
         , span [] [ text "tv" ]
         ]
@@ -385,10 +394,11 @@ viewVolumeButton srcUrl altText command =
     div [ class "volume-button-container" ]
         [ div [ class "volume-button-inner-container" ]
             [ button
-                [ type_ "button"
-                , class "button volume-button"
-                , onClickWithPreventDefault (SendReceiverCommand command)
-                ]
+                (onClickWithPreventDefault (SendReceiverCommand command)
+                    [ type_ "button"
+                    , class "button volume-button"
+                    ]
+                )
                 [ img [ src srcUrl, alt altText ] [] ]
             ]
         ]
@@ -409,10 +419,11 @@ viewMuteButton : Html Msg
 viewMuteButton =
     div [ class "mute-button-container" ]
         [ button
-            [ type_ "button"
-            , class "button mute-button"
-            , onClickWithPreventDefault (SendReceiverCommand ToggleMute)
-            ]
+            (onClickWithPreventDefault (SendReceiverCommand ToggleMute)
+                [ type_ "button"
+                , class "button mute-button"
+                ]
+            )
             []
         , text "mute"
         ]

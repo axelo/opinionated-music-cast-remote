@@ -69,10 +69,10 @@ const createIndexHtml = (
   const indexContentWithBundleScript = fs
     .readFileSync(inIndexHtmlFilePath, 'utf8')
     .replace(
-      '</head>',
-      '    <script src="' +
+      '<script',
+      '<script src="' +
         path.basename(bundleFilePath) +
-        '"></script>\n</head>'
+        '" defer></script>\n    <script'
     );
 
   fs.writeFileSync(outIndexHtmlFilePath, indexContentWithBundleScript, 'utf8');
